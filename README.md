@@ -119,49 +119,52 @@ I also learned how to prepare image datasets, implement a training pipeline, vis
 
 ---
 
-# Week 6: Project Proposal — Land Use and Land Cover Classification from Satellite Images
+# Week 6: Project Proposal — Steel Surface Defect Detection for Manufacturing Quality Control
 
 ## Proposed Project Title
 
-**Satellite Image Land Use Classification Using Transfer Learning with ResNet-18**
+**Hot-Rolled Steel Surface Defect Classification Using Transfer Learning with ResNet-18**
 
 ## Problem Statement
 
-Governments, city planners, and environmental agencies need up-to-date information about how land is used, such as residential areas, industrial zones, highways, forests, and water bodies. Checking this manually across large regions is slow and expensive. This project proposes an image classification system that automatically identifies the land use or land cover type from a satellite image patch.
+In steel manufacturing, surface defects such as cracks, scratches, and inclusions reduce product quality and can cause failures in later use. Manual inspection is slow, tiring, and inconsistent between inspectors. This project proposes an image classification system that automatically identifies the type of defect on a steel strip surface from a photograph, supporting automated quality control on a production line.
 
 ## Domain and Motivation
 
-- **Domain:** Remote sensing and satellite imagery
-- **Why this domain:** Automated land classification supports urban planning, environmental monitoring, disaster response, and infrastructure mapping.
-- **Why deep learning:** Different land types have distinct textures, shapes, and layouts (for example road lines, building grids, water surfaces), which CNNs can learn automatically.
-- **Link to Week 5:** The same workflow from this lab (data loaders, augmentation, feature extraction, fine-tuning, and error analysis) will be applied to a new satellite dataset.
+- **Domain:** Manufacturing and industrial quality inspection
+- **Why this domain:** Automated visual inspection is a practical application in industrial electronics and automation, where fast and consistent defect detection reduces waste and cost.
+- **Why deep learning:** Different defects have distinct textures and patterns that CNNs can learn automatically, without hand-designed features.
+- **Link to Week 5:** The same workflow from this lab (data loaders, augmentation, feature extraction, fine-tuning, and error analysis) will be applied to a new industrial dataset.
 
 ## Proposed Dataset
 
-**EuroSAT: Land Use and Land Cover Classification Dataset**
+**NEU Surface Defect Database (NEU-CLS)**
 
-- **GitHub repository (by the dataset creators):** https://github.com/phelber/EuroSAT
-- **Official download (Zenodo):** https://zenodo.org/records/7711810
-- **Paper:** Helber, P., Bischke, B., Dengel, A. & Borth, D., *EuroSAT: A Novel Dataset and Deep Learning Benchmark for Land Use and Land Cover Classification*. https://arxiv.org/abs/1709.00029
-- **Source imagery:** Sentinel-2 satellite images from the European Space Agency's Copernicus program.
-- **Size:** 27,000 labeled and geo-referenced images.
-- **Classes (10):** Annual Crop, Forest, Herbaceous Vegetation, Highway, Industrial, Pasture, Permanent Crop, Residential, River, and Sea/Lake.
-- **Versions:** An RGB version (`EuroSAT_RGB.zip`, JPEG images) and a multispectral version (`EuroSAT_MS.zip`, all 13 Sentinel-2 bands). This project uses the **RGB version**.
-- **Image size:** 64 × 64 pixel patches.
-- **License and terms:** Sentinel data is free and open to the public under EU law. The dataset is used under the Copernicus Sentinel Data Terms and Conditions, and it is credited to its original authors.
+- **Source:** Surface Inspection Laboratory, Northeastern University (NEU), China
+- **Official page:** http://faculty.neu.edu.cn/yunhyan/NEU_surface_defect_database.html
+- **Kaggle copy:** https://www.kaggle.com/datasets/kaustubhdikshit/neu-surface-defect-database
+- **Example GitHub project using this dataset:** https://github.com/rccohn/NEU-Cluster
+- **Size:** 1,800 images in total.
+- **Classes (6):** Crazing, Inclusion, Patches, Pitted Surface, Rolled-in Scale, and Scratches.
+- **Balance:** 300 images per class, so the dataset is perfectly balanced.
+- **Image format:** Grayscale, 200 × 200 pixels.
+- **Origin:** Images were collected from real hot-rolled steel production.
+- **Dataset challenges:** Defects within the same class can look very different, while defects from different classes can look similar. Lighting and material variations also affect the images.
+- **Related paper:** Song, K. & Yan, Y. (2013), *A noise robust method based on completed local binary patterns for hot-rolled steel strip surface defects*, Applied Surface Science, 285.
+- **License:** To be confirmed before use. The dataset is publicly available for research, and it will be credited to the original authors.
 
-> Note: The exact number of images per class will be recorded after exploring the downloaded copy of the dataset.
+> Note: The dataset is also available as NEU-DET, which adds bounding-box annotations for defect localization. This project uses the image-only classification version (NEU-CLS).
 
 ## Proposed Approach
 
-1. **Data exploration:** Count images per class, check class balance, and visualize samples from each of the 10 classes.
+1. **Data exploration:** Count images per class and visualize sample defects from each class.
 2. **Data splitting:** Create stratified training, validation, and test sets (for example 70% / 15% / 15%).
-3. **Preprocessing:** Resize the 64×64 patches to 224×224 and normalize with ImageNet mean and standard deviation.
-4. **Augmentation:** Apply random horizontal and vertical flips and 90-degree rotations to the training set only. Satellite images have no fixed "up" direction, so these transformations are safe.
-5. **Baseline model:** Use a pretrained ResNet-18 as a frozen feature extractor with a new ten-class head.
+3. **Preprocessing:** Convert grayscale images to 3 channels, resize to 224×224, and normalize with ImageNet mean and standard deviation.
+4. **Augmentation:** Apply random flips and small rotations to the training set only. Because the dataset is small, augmentation is important to reduce overfitting.
+5. **Baseline model:** Use a pretrained ResNet-18 as a frozen feature extractor with a new six-class head.
 6. **Fine-tuning:** Unfreeze `layer4` and train with different learning rates for the pretrained block and the new head, as done in Week 5.
 7. **Evaluation:** Report accuracy, per-class precision, recall, and F1-score, plus a confusion matrix.
-8. **Error analysis:** Build an error gallery and study which land types are confused with each other, and why.
+8. **Error analysis:** Build an error gallery and study which defect types are confused with each other, and why.
 9. **Saving:** Save the trained weights and document how to reload them.
 
 ## Tools and Environment
@@ -175,20 +178,20 @@ Governments, city planners, and environmental agencies need up-to-date informati
 
 - Overall accuracy on the held-out test set
 - Per-class precision, recall, and F1-score
-- Confusion matrix to find commonly confused land types
+- Confusion matrix to find commonly confused defect types
 - Training and validation learning curves to monitor overfitting
 
 ## Expected Challenges and Limitations
 
-- **Similar-looking classes:** Some classes look alike from above, such as Annual Crop, Permanent Crop, and Pasture, or Highway and River.
-- **Low resolution:** The 64×64 patches limit fine detail, and upscaling to 224×224 does not add new information.
-- **Geographic bias:** The images come from European cities, so the model may not generalize to other regions with different landscapes and building styles.
-- **Seasonal and lighting variation:** Appearance changes with season and weather.
+- **Small dataset:** With only 1,800 images, overfitting is a risk, so augmentation and transfer learning are important.
+- **Similar-looking defects:** Some defect classes (for example crazing and rolled-in scale) may be confused.
+- **Grayscale and low resolution:** The images are small, so fine details may be limited.
+- **Real-world gap:** Results on this benchmark may not directly match performance on a live production line with different lighting and cameras.
 
 ## Expected Outcomes
 
-- A working land use classifier built with transfer learning.
-- A comparison between feature extraction and fine-tuning on satellite imagery.
+- A working steel defect classifier built with transfer learning.
+- A comparison between feature extraction and fine-tuning on a small industrial dataset.
 - A written analysis of the model's strengths, mistakes, and limitations.
 - A well-documented GitHub repository.
 
@@ -196,8 +199,8 @@ Governments, city planners, and environmental agencies need up-to-date informati
 
 | Step | Task |
 |------|------|
-| 1 | Finalize dataset choice and review its terms of use |
-| 2 | Explore the data and check the ten classes |
+| 1 | Finalize dataset choice and review its license |
+| 2 | Explore the data and check the six classes |
 | 3 | Build the data pipeline (splits, transforms, loaders) |
 | 4 | Train the baseline and fine-tuned models |
 | 5 | Evaluate, analyze errors, and document results |
@@ -213,4 +216,4 @@ Governments, city planners, and environmental agencies need up-to-date informati
 
 ## Acknowledgment
 
-This project follows the Week 5 laboratory instructions for Introduction to Applied AI. The Intel Image Classification dataset is available through Kaggle. The Week 6 proposal uses the EuroSAT dataset created by Helber et al., based on Sentinel-2 satellite imagery from the European Space Agency (Copernicus program).
+This project follows the Week 5 laboratory instructions for Introduction to Applied AI. The Intel Image Classification dataset is available through Kaggle. The Week 6 proposal uses the NEU Surface Defect Database created by the Surface Inspection Laboratory of Northeastern University, China.
